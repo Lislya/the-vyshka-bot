@@ -1,1 +1,1 @@
-web: python3 the_vyshka_bot.py
+worker: python3 the_vyshka_bot.py
