@@ -153,14 +153,9 @@ def change_article(update, context, prev_or_next, index, content_collection):
 @send_action(ChatAction.TYPING)
 def about(update, context):
     """" команда about: выводит список доступных команд """
-    message = 'Привет! Я бот The Vyshka. Вот какие команды я знаю:\n'
+    message = 'Привет! Я бот The Vyshka. Помогу тебе быть в курсе последних событий ВШЭ:\n'
     message += '/start - начало работы\n'
     message += '/about - обо мне\n'
-    message += '/news - последние новости\n'
-    message += '/people - люди на The Vyshka\n'
-    message += '/trends - тренды\n'
-    message += '/opinions - интересные мнения\n'
-    message += '/places - интересные места\n'
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=message)
 
