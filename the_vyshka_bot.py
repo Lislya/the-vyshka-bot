@@ -4,13 +4,16 @@ from telegram.ext import CommandHandler
 from telegram.ext import Updater, MessageHandler, Filters, CallbackQueryHandler
 
 import commands
+import os
 
+
+token = os.getenv("TOKEN")
 # Настраиваем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
 # Получаем объект-"уведомитель", передав в него наш токен бота полученного от @BotFather
-updater = Updater(token='<token>', use_context=True)
+updater = Updater(token=token, use_context=True)
 dispatcher = updater.dispatcher
 
 
