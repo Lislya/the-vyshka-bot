@@ -37,77 +37,117 @@ def text(update, context):
     if command == 'Новости':
         news(update, context)
     elif command == 'Люди':
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='хуюди')
+        people(update, context)
     elif command == 'Тренды':
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='хуенды')
+        trends(update, context)
     elif command == 'Мнения':
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='хуения')
+        views(update, context)
     elif command == 'Места':
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='нет мест, пройдите в вагон')
+        places(update, context)
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text='???????')
+                                 text='Извини, не знаю такой команды.')
+
+
+# Все новости, полученные с сайта (с первой страницы)
+articles_dict = {}
+people_dict = {}
+trends_dict = {}
+views_dict = {}
+places_dict = {}
+# Текущий индекс показываемой новости
+CURRENT_ARTICLE_INDEX = 0
+CURRENT_PEOPLE_INDEX = 0
+CURRENT_TRENDS_INDEX = 0
+CURRENT_VIEWS_INDEX = 0
+CURRENT_PLACES_INDEX = 0
 
 
 def callback(update, context):
     """" Функия "реагирования" на нажатия inline-кнопки """
+    global CURRENT_ARTICLE_INDEX
+    global CURRENT_PEOPLE_INDEX
+    global CURRENT_TRENDS_INDEX
+    global CURRENT_VIEWS_INDEX
+    global CURRENT_PLACES_INDEX
     button_data = update.callback_query.data
-    change_article(update, context, button_data)
-
-
-# Все новости, полученные с сайта (с первой страницы)
-articles = {}
-# Текущий индекс показываемой новости
-CURRENT_ARTICLE_INDEX = 0
+    category = update.effective_message.caption
+    if 'novosti' in category:
+        CURRENT_ARTICLE_INDEX = change_article(update, context, button_data, CURRENT_ARTICLE_INDEX, articles_dict)
+    elif 'people' in category:
+        CURRENT_PEOPLE_INDEX = change_article(update, context, button_data, CURRENT_PEOPLE_INDEX, people_dict)
+    elif 'trends' in category:
+        CURRENT_TRENDS_INDEX = change_article(update, context, button_data, CURRENT_TRENDS_INDEX, trends_dict)
+    elif 'views' in category:
+        CURRENT_VIEWS_INDEX = change_article(update, context, button_data, CURRENT_VIEWS_INDEX, views_dict)
+    elif 'places' in category:
+        CURRENT_PLACES_INDEX = change_article(update, context, button_data, CURRENT_PLACES_INDEX, places_dict)
 
 
 @send_action(ChatAction.TYPING)
 def news(update, context):
-    """" Получаем список новостей с сайта The Vyshka с помощью библиотеки BeautifulSoup """
+    get_content(update, context, 'novosti', articles_dict)
 
-    req = requests.get('https://thevyshka.ru/cat/novosti/')  # посылаем запрос
-    soup = bs4.BeautifulSoup(req.text, 'html.parser')        # парсим полученный с сайта текст
-    articles_imgs = soup.select('article  img')              # выбираем список всех картинок
-    articles_titles = soup.select('.article__title')         # выбираем список все названия новостей
-    articles_link = soup.select('.article__title a')         # выбираем все ссылки на новости
-    articles_content = soup.select('.article__content')      # выбираем тексты статей
 
-    for i in range(len(articles_titles)):                    # пробегаемся по нашему списку новостей,
-        title = articles_titles[i].getText()[1:]             # который выглядит примерно вот так:
-        content = articles_content[i].getText()              # [новость 1, новость2, новость3, ...]
-        link = 'https:/' + articles_link[i]['href'][1:]      # и складываем их в "словарик" следующего вида
-        image = 'https:/' + articles_imgs[i]['src'][1:]      # {новость: картинка, и т. д.} в переменную articles
+@send_action(ChatAction.TYPING)
+def people(update, context):
+    get_content(update, context, 'people', people_dict)
 
-        message = title + content + '\n' + link
-        articles[message] = image
 
-    # посылаем первую новость пользователю
+@send_action(ChatAction.TYPING)
+def trends(update, context):
+    get_content(update, context, 'trends', trends_dict)
+
+
+@send_action(ChatAction.TYPING)
+def views(update, context):
+    get_content(update, context, 'views', views_dict)
+
+
+@send_action(ChatAction.TYPING)
+def places(update, context):
+    get_content(update, context, 'places', places_dict)
+
+
+def get_content(update, context, category, content_collection):
+    req = requests.get('https://thevyshka.ru/cat/' + category)
+    soup = bs4.BeautifulSoup(req.text, 'html.parser')
+    images = soup.select('article  img')
+    titles = soup.select('.article__title')
+    links = soup.select('.article__title a')
+    contents = soup.select('.article__content')
+
+    for i in range(len(titles)):
+        title = titles[i].getText()[1:]
+        content = contents[i].getText()
+        link = 'https:/' + links[i]['href'][1:]
+        image = 'https:/' + images[i]['src'][1:]
+
+        message = title + content + '\n' + '#' + category + '\n' + link
+        content_collection[message] = image
+
     context.bot.send_photo(chat_id=update.effective_chat.id,
-                           photo=articles[list(articles.keys())[0]],
-                           caption=list(articles.keys())[0],
+                           photo=content_collection[list(content_collection.keys())[0]],
+                           caption=list(content_collection.keys())[0],
                            reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
 
 
-def change_article(update, context, prev_or_next):
+def change_article(update, context, prev_or_next, index, content_collection):
     """" Сменяем новость в показываемом сообщении в зависимости от нажатой кнопки """
-    global CURRENT_ARTICLE_INDEX
     if prev_or_next == 'next':
-        CURRENT_ARTICLE_INDEX = CURRENT_ARTICLE_INDEX + 1 if CURRENT_ARTICLE_INDEX < len(list(articles)) - 1 else 0
+        index = index + 1 if index < len(list(content_collection)) - 1 else 0
     elif prev_or_next == 'prev':
-        CURRENT_ARTICLE_INDEX -= 1
+        index -= 1
 
-    photo_link = articles[list(articles.keys())[CURRENT_ARTICLE_INDEX]]
-    caption = list(articles.keys())[CURRENT_ARTICLE_INDEX]
+    photo_link = content_collection[list(content_collection.keys())[index]]
+    caption = list(content_collection.keys())[index]
     media = InputMediaPhoto(media=photo_link,
                             caption=caption)
     context.bot.edit_message_media(chat_id=update.effective_chat.id,
                                    message_id=update.effective_message.message_id,
                                    media=media,
                                    reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
+    return index
 
 
 @send_action(ChatAction.TYPING)
