@@ -132,7 +132,6 @@ def get_content(update, context, category, content_collection):
                            reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
 
 
-@send_action(ChatAction.UPLOAD_DOCUMENT)
 def change_article(update, context, prev_or_next, index, content_collection):
     """" Сменяем новость в показываемом сообщении в зависимости от нажатой кнопки """
     if prev_or_next == 'next':
