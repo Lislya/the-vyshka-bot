@@ -132,6 +132,7 @@ def get_content(update, context, category, content_collection):
                            reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
 
 
+@send_action(ChatAction.UPLOAD_DOCUMENT)
 def change_article(update, context, prev_or_next, index, content_collection):
     """" Сменяем новость в показываемом сообщении в зависимости от нажатой кнопки """
     if prev_or_next == 'next':
@@ -153,6 +154,7 @@ def change_article(update, context, prev_or_next, index, content_collection):
 @send_action(ChatAction.TYPING)
 def about(update, context):
     """" команда about: выводит список доступных команд """
+
     message = 'Привет! Я бот The Vyshka. Помогу тебе быть в курсе последних событий ВШЭ:\n'
     message += '/start - начало работы\n'
     message += '/about - обо мне\n'
