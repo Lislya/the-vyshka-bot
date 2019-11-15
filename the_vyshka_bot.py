@@ -7,7 +7,7 @@ import commands
 import os
 
 
-token = os.getenv("TOKEN")
+token = '876855268:AAFgw47GtPej2Un-at4Bfetdh-bdT6hJgYE'
 # Настраиваем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)

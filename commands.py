@@ -2,7 +2,7 @@ from functools import wraps
 
 import bs4
 import requests
-from telegram import ChatAction, ParseMode, InputMediaPhoto
+from telegram import ChatAction, InputMediaPhoto
 
 import keyboards
 
@@ -21,11 +21,24 @@ def send_action(action):
     return decorator
 
 
+users_indexes = {}
+
+
 def start(update, context):
     """" Вывод меню на клавиатуру пользователя """
+    chat_id = update.effective_chat.id
+    if chat_id not in users_indexes.keys():
+        users_indexes[chat_id] = {
+            'CURRENT_ARTICLE_INDEX': 0,
+            'CURRENT_PEOPLE_INDEX': 0,
+            'CURRENT_TRENDS_INDEX': 0,
+            'CURRENT_VIEWS_INDEX': 0,
+            'CURRENT_PLACES_INDEX': 0
+        }
+
     start_keyboard = keyboards.START_KEYBOARD()
     start_message = 'Выберите пункт меню:'
-    context.bot.send_message(chat_id=update.effective_chat.id,
+    context.bot.send_message(chat_id=chat_id,
                              text=start_message,
                              reply_markup=start_keyboard)
 
@@ -55,57 +68,67 @@ people_dict = []
 trends_dict = []
 views_dict = []
 places_dict = []
-# Текущий индекс показываемой новости
-CURRENT_ARTICLE_INDEX = 0
-CURRENT_PEOPLE_INDEX = 0
-CURRENT_TRENDS_INDEX = 0
-CURRENT_VIEWS_INDEX = 0
-CURRENT_PLACES_INDEX = 0
 
 
 def callback(update, context):
     """" Функия "реагирования" на нажатия inline-кнопки """
-    global CURRENT_ARTICLE_INDEX
-    global CURRENT_PEOPLE_INDEX
-    global CURRENT_TRENDS_INDEX
-    global CURRENT_VIEWS_INDEX
-    global CURRENT_PLACES_INDEX
+    chat_id = update.effective_chat.id
+    current_article_index = users_indexes[chat_id]['CURRENT_ARTICLE_INDEX']
+    current_people_index = users_indexes[chat_id]['CURRENT_PEOPLE_INDEX']
+    current_trends_index = users_indexes[chat_id]['CURRENT_TRENDS_INDEX']
+    current_views_index = users_indexes[chat_id]['CURRENT_VIEWS_INDEX']
+    current_places_index = users_indexes[chat_id]['CURRENT_PLACES_INDEX']
     button_data = update.callback_query.data
     category = update.effective_message.caption
     if 'novosti' in category:
-        CURRENT_ARTICLE_INDEX = change_article(update, context, button_data, CURRENT_ARTICLE_INDEX, articles_dict)
+        users_indexes[chat_id]['CURRENT_ARTICLE_INDEX'] = change_article(update, context, button_data,
+                                                                         current_article_index, articles_dict)
     elif 'people' in category:
-        CURRENT_PEOPLE_INDEX = change_article(update, context, button_data, CURRENT_PEOPLE_INDEX, people_dict)
+        users_indexes[chat_id]['CURRENT_PEOPLE_INDEX'] = change_article(update, context, button_data,
+                                                                        current_people_index, people_dict)
     elif 'trends' in category:
-        CURRENT_TRENDS_INDEX = change_article(update, context, button_data, CURRENT_TRENDS_INDEX, trends_dict)
+        users_indexes[chat_id]['CURRENT_TRENDS_INDEX'] = change_article(update, context, button_data,
+                                                                        current_trends_index, trends_dict)
     elif 'views' in category:
-        CURRENT_VIEWS_INDEX = change_article(update, context, button_data, CURRENT_VIEWS_INDEX, views_dict)
+        users_indexes[chat_id]['CURRENT_VIEWS_INDEX'] = change_article(update, context, button_data,
+                                                                       current_views_index, views_dict)
     elif 'places' in category:
-        CURRENT_PLACES_INDEX = change_article(update, context, button_data, CURRENT_PLACES_INDEX, places_dict)
+        users_indexes[chat_id]['CURRENT_PLACES_INDEX'] = change_article(update, context, button_data,
+                                                                        current_places_index, places_dict)
 
 
 @send_action(ChatAction.TYPING)
 def news(update, context):
+    chat_id = update.effective_chat.id
+    users_indexes[chat_id]['CURRENT_ARTICLE_INDEX'] = 0
     get_content(update, context, 'novosti', articles_dict)
 
 
 @send_action(ChatAction.TYPING)
 def people(update, context):
+    chat_id = update.effective_chat.id
+    users_indexes[chat_id]['CURRENT_PEOPLE_INDEX'] = 0
     get_content(update, context, 'people', people_dict)
 
 
 @send_action(ChatAction.TYPING)
 def trends(update, context):
+    chat_id = update.effective_chat.id
+    users_indexes[chat_id]['CURRENT_TRENDS_INDEX'] = 0
     get_content(update, context, 'trends', trends_dict)
 
 
 @send_action(ChatAction.TYPING)
 def views(update, context):
+    chat_id = update.effective_chat.id
+    users_indexes[chat_id]['CURRENT_VIEWS_INDEX'] = 0
     get_content(update, context, 'views', views_dict)
 
 
 @send_action(ChatAction.TYPING)
 def places(update, context):
+    chat_id = update.effective_chat.id
+    users_indexes[chat_id]['CURRENT_PLACES_INDEX'] = 0
     get_content(update, context, 'places', places_dict)
 
 
