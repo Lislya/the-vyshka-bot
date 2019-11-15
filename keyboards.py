@@ -23,7 +23,8 @@ def START_KEYBOARD():
     return ReplyKeyboardMarkup(button_list, resize_keyboard=True)
 
 
-def NEWS_INLINE_KEYBOARD():
+def NEWS_INLINE_KEYBOARD(url):
     button_list = [InlineKeyboardButton('<===', callback_data='prev'),
                    InlineKeyboardButton('===>', callback_data='next')]
-    return InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
+    header_button = InlineKeyboardButton('Читать новость', url=url)
+    return InlineKeyboardMarkup(build_menu(button_list, n_cols=2, header_buttons=header_button))

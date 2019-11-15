@@ -50,11 +50,11 @@ def text(update, context):
 
 
 # Все новости, полученные с сайта (с первой страницы)
-articles_dict = {}
-people_dict = {}
-trends_dict = {}
-views_dict = {}
-places_dict = {}
+articles_dict = []
+people_dict = []
+trends_dict = []
+views_dict = []
+places_dict = []
 # Текущий индекс показываемой новости
 CURRENT_ARTICLE_INDEX = 0
 CURRENT_PEOPLE_INDEX = 0
@@ -113,23 +113,29 @@ def get_content(update, context, category, content_collection):
     req = requests.get('https://thevyshka.ru/cat/' + category)
     soup = bs4.BeautifulSoup(req.text, 'html.parser')
     images = soup.select('article  img')
+    dates = soup.select('.article__meta-links li')
     titles = soup.select('.article__title')
     links = soup.select('.article__title a')
     contents = soup.select('.article__content')
 
     for i in range(len(titles)):
         title = titles[i].getText()[1:]
+        date = dates[i].getText()
         content = contents[i].getText()
         link = 'https:/' + links[i]['href'][1:]
         image = 'https:/' + images[i]['src'][1:]
+        message = title + content + '\n' + date + '\n' + '#' + category
 
-        message = title + content + '\n' + '#' + category + '\n' + link
-        content_collection[message] = image
+        news_token = {link: {image: message}}
+        content_collection.append(news_token)
 
+    first_news_link = list(content_collection[0].keys())[0]
+    first_photo = list(list(content_collection[0].values())[0])[0]
+    first_caption = list(content_collection[0].values())[0][first_photo]
     context.bot.send_photo(chat_id=update.effective_chat.id,
-                           photo=content_collection[list(content_collection.keys())[0]],
-                           caption=list(content_collection.keys())[0],
-                           reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
+                           photo=first_photo,
+                           caption=first_caption,
+                           reply_markup=keyboards.NEWS_INLINE_KEYBOARD(first_news_link))
 
 
 def change_article(update, context, prev_or_next, index, content_collection):
@@ -139,14 +145,15 @@ def change_article(update, context, prev_or_next, index, content_collection):
     elif prev_or_next == 'prev':
         index -= 1
 
-    photo_link = content_collection[list(content_collection.keys())[index]]
-    caption = list(content_collection.keys())[index]
+    news_link = list(content_collection[index].keys())[0]
+    photo_link = list(list(content_collection[index].values())[0])[0]
+    caption = list(content_collection[index].values())[0][photo_link]
     media = InputMediaPhoto(media=photo_link,
                             caption=caption)
     context.bot.edit_message_media(chat_id=update.effective_chat.id,
                                    message_id=update.effective_message.message_id,
                                    media=media,
-                                   reply_markup=keyboards.NEWS_INLINE_KEYBOARD())
+                                   reply_markup=keyboards.NEWS_INLINE_KEYBOARD(news_link))
     return index
 
 
