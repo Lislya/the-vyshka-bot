@@ -1,13 +1,12 @@
 import logging
+import os
 
 from telegram.ext import CommandHandler
 from telegram.ext import Updater, MessageHandler, Filters, CallbackQueryHandler
 
 import commands
-import os
 
-
-token = '876855268:AAFgw47GtPej2Un-at4Bfetdh-bdT6hJgYE'
+token = os.getenv("TOKEN")
 # Настраиваем логирование
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
