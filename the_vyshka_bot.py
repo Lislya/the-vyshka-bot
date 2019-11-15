@@ -20,6 +20,10 @@ dispatcher = updater.dispatcher
 start_handler = CommandHandler('start', commands.start)
 dispatcher.add_handler(start_handler)
 
+# Обработчик команды /update
+update_handler = CommandHandler('update', commands.start)
+dispatcher.add_handler(update_handler)
+
 # Обработчик команды /about
 about_handler = CommandHandler('about', commands.about)
 dispatcher.add_handler(about_handler)
