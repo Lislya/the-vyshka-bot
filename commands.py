@@ -1,9 +1,13 @@
-from functools import wraps
+from functools import wraps  # модуль для построения декораторов ("@" - вот такой функции)
 
+# библиотека BeautifulSoup для разбора страницы сайта (html)
 import bs4
+# библиотека requests для осуществления HTTP-протоколом
 import requests
+# библиотека для создания телеграмм-бота
 from telegram import ChatAction, InputMediaPhoto
 
+# модуль клавиатур бота
 import keyboards
 
 
@@ -21,7 +25,15 @@ def send_action(action):
     return decorator
 
 
+# словарь вида: { ID пользователя: указатель индекса новости }
 users_indexes = {}
+
+# списки для хранения всех новостей с разных разделов сайта the vyshka
+articles_dict = []
+people_dict = []
+trends_dict = []
+views_dict = []
+places_dict = []
 
 
 def start(update, context):
@@ -60,14 +72,6 @@ def text(update, context):
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text='Извини, не знаю такой команды.')
-
-
-# Все новости, полученные с сайта (с первой страницы)
-articles_dict = []
-people_dict = []
-trends_dict = []
-views_dict = []
-places_dict = []
 
 
 def callback(update, context):
@@ -127,12 +131,15 @@ def views(update, context):
 
 @send_action(ChatAction.TYPING)
 def places(update, context):
+    """" команда 'places' """
     chat_id = update.effective_chat.id
     users_indexes[chat_id]['CURRENT_PLACES_INDEX'] = 0
     get_content(update, context, 'places', places_dict)
 
 
 def get_content(update, context, category, content_collection):
+    """ функция получения списка новостей по команде с сайта the vyshka """
+
     req = requests.get('https://thevyshka.ru/cat/' + category)
     soup = bs4.BeautifulSoup(req.text, 'html.parser')
     images = soup.select('article  img')
@@ -163,6 +170,7 @@ def get_content(update, context, category, content_collection):
 
 def change_article(update, context, prev_or_next, index, content_collection):
     """" Сменяем новость в показываемом сообщении в зависимости от нажатой кнопки """
+
     if prev_or_next == 'next':
         index = index + 1 if index < len(list(content_collection)) - 1 else 0
     elif prev_or_next == 'prev':
@@ -186,6 +194,7 @@ def about(update, context):
 
     message = 'Привет! Я бот The Vyshka. Помогу тебе быть в курсе последних событий ВШЭ:\n'
     message += '/start - начало работы\n'
+    message += '/update - если бот перестал отвечать\n'
     message += '/about - обо мне\n'
     context.bot.send_message(chat_id=update.effective_chat.id,
                              text=message)
